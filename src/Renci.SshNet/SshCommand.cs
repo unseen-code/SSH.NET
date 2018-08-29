@@ -57,6 +57,10 @@ namespace Renci.SshNet
         ///     <code source="..\..\src\Renci.SshNet.Tests\Classes\SshCommandTest.cs" region="Example SshCommand CreateCommand Execute OutputStream" language="C#" title="Use OutputStream to get command execution output" />
         /// </example>
         public Stream OutputStream { get; private set; }
+        /// <summary>
+        /// info output function
+        /// </summary>
+        public Action<string> OutputValue { get; set; }
 
         /// <summary>
         /// Gets the extended output stream.
@@ -65,6 +69,10 @@ namespace Renci.SshNet
         ///     <code source="..\..\src\Renci.SshNet.Tests\Classes\SshCommandTest.cs" region="Example SshCommand CreateCommand Execute ExtendedOutputStream" language="C#" title="Use ExtendedOutputStream to get command debug execution output" />
         /// </example>
         public Stream ExtendedOutputStream { get; private set; }
+        /// <summary>
+        /// Error output function
+        /// </summary>
+        public Action<string> ErrorValue { get; set; }
 
         private StringBuilder _result;
         /// <summary>
@@ -245,8 +253,8 @@ namespace Renci.SshNet
             }
 
             //  Initialize output streams
-            OutputStream = new PipeStream();
-            ExtendedOutputStream = new PipeStream();
+            // OutputStream = new PipeStream();
+            // ExtendedOutputStream = new PipeStream();
 
             _result = null;
             _error = null;
@@ -442,11 +450,13 @@ namespace Renci.SshNet
 
         private void Channel_ExtendedDataReceived(object sender, ChannelExtendedDataEventArgs e)
         {
-            if (ExtendedOutputStream != null)
-            {
-                ExtendedOutputStream.Write(e.Data, 0, e.Data.Length);
-                ExtendedOutputStream.Flush();
-            }
+            string outputValue = Encoding.UTF8.GetString ( e.Data );
+            OutputValue(outputValue);
+            // if (ExtendedOutputStream != null)
+            // {
+            //     ExtendedOutputStream.Write(e.Data, 0, e.Data.Length);
+            //     ExtendedOutputStream.Flush();
+            // }
 
             if (e.DataTypeCode == 1)
             {
@@ -456,11 +466,13 @@ namespace Renci.SshNet
 
         private void Channel_DataReceived(object sender, ChannelDataEventArgs e)
         {
-            if (OutputStream != null)
-            {
-                OutputStream.Write(e.Data, 0, e.Data.Length);
-                OutputStream.Flush();
-            }
+            string errorValue = Encoding.UTF8.GetString ( e.Data );
+            ErrorValue(errorValue);
+            // if (OutputStream != null)
+            // {
+            //     OutputStream.Write(e.Data, 0, e.Data.Length);
+            //     OutputStream.Flush();
+            // }
 
             if (_asyncResult != null)
             {
